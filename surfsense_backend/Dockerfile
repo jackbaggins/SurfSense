@@ -23,17 +23,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Update certificates and install SSL tools
 RUN update-ca-certificates
 RUN pip install --upgrade certifi pip-system-certs
+RUN pip install --no-cache-dir torch torchvision torchaudio
 
 # Copy requirements
 COPY pyproject.toml .
 COPY uv.lock .
-
-# Install PyTorch based on architecture
-RUN if [ "$(uname -m)" = "x86_64" ]; then \
-        pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121; \
-    else \
-        pip install --no-cache-dir torch torchvision torchaudio; \
-    fi
 
 # Install python dependencies
 RUN pip install --no-cache-dir uv && \
@@ -48,17 +42,27 @@ ENV SSL_CERT_FILE=/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
 ENV REQUESTS_CA_BUNDLE=/usr/local/lib/python3.12/site-packages/certifi/cacert.pem
 
 # Pre-download EasyOCR models to avoid runtime SSL issues
-RUN mkdir -p /root/.EasyOCR/model
-RUN wget --no-check-certificate https://github.com/JaidedAI/EasyOCR/releases/download/v1.3/english_g2.zip -O /root/.EasyOCR/model/english_g2.zip || true
-RUN wget --no-check-certificate https://github.com/JaidedAI/EasyOCR/releases/download/pre-v1.1.6/craft_mlt_25k.zip -O /root/.EasyOCR/model/craft_mlt_25k.zip || true
-RUN cd /root/.EasyOCR/model && (unzip -o english_g2.zip || true) && (unzip -o craft_mlt_25k.zip || true)
+# RUN mkdir -p /root/.EasyOCR/model
+# RUN wget --no-check-certificate https://github.com/JaidedAI/EasyOCR/releases/download/v1.3/english_g2.zip -O /root/.EasyOCR/model/english_g2.zip || true
+# RUN wget --no-check-certificate https://github.com/JaidedAI/EasyOCR/releases/download/pre-v1.1.6/craft_mlt_25k.zip -O /root/.EasyOCR/model/craft_mlt_25k.zip || true
+# RUN cd /root/.EasyOCR/model && (unzip -o english_g2.zip || true) && (unzip -o craft_mlt_25k.zip || true)
+
+RUN pip install docling
+# RUN docling-tools models download -o /opt/docling_models
 
 # Pre-download Docling models
-RUN python -c "try:\n    from docling.document_converter import DocumentConverter\n    conv = DocumentConverter()\nexcept:\n    pass" || true
+# RUN python -c "try:\n    from docling.document_converter import DocumentConverter\n    conv = DocumentConverter()\nexcept:\n    pass" || true
 
 # Install Playwright browsers for web scraping if needed
 RUN pip install playwright && \
     playwright install chromium
+
+# Set a cache dir for flashrank
+ENV FLASHRANK_CACHE_DIR=/app/.flashrank_cache
+RUN mkdir -p $FLASHRANK_CACHE_DIR
+
+# Force-download the model at build time
+RUN python -c "from flashrank import Ranker; Ranker(model_name='ms-marco-MiniLM-L-12-v2', cache_dir='$FLASHRANK_CACHE_DIR')"
 
 # Copy source code
 COPY . .
