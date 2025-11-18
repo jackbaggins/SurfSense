@@ -250,7 +250,7 @@ async def _process_youtube_video(url: str, search_space_id: int, user_id: str):
             raise
 
 
-@celery_app.task(name="process_file_upload", bind=True)
+@celery_app.task(name="process_file_upload", bind=True, queue="gpu_docs")
 def process_file_upload_task(
     self, file_path: str, filename: str, search_space_id: int, user_id: str
 ):
