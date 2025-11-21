@@ -28,18 +28,11 @@ export default function DashboardLayout({
 
 	const customNavMain = [
 		{
-			title: "Researcher",
+			title: "Chat",
 			url: `/dashboard/${search_space_id}/researcher`,
 			icon: "SquareTerminal",
 			items: [],
 		},
-		{
-			title: "Manage LLMs",
-			url: `/dashboard/${search_space_id}/settings`,
-			icon: "Settings2",
-			items: [],
-		},
-
 		{
 			title: "Sources",
 			url: "#",
@@ -58,6 +51,12 @@ export default function DashboardLayout({
 					url: `/dashboard/${search_space_id}/connectors`,
 				},
 			],
+		},
+		{
+			title: "Settings",
+			url: `/dashboard/${search_space_id}/settings`,
+			icon: "Settings2",
+			items: [],
 		},
 		{
 			title: "Logs",
